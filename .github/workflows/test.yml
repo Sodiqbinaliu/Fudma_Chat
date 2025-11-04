@@ -16,12 +16,14 @@ jobs:
 
           # Record precise start time (Unix epoch milliseconds)
           START_MS=$(($(date +%s%3N)))
+          START_HR=$(date -u +'%Y-%m-%d %H:%M:%S.%3N UTC')
+          echo "Starting latency test at: $START_HR ($START_MS ms)"
 
           RESPONSE=$(curl -s -w "\n%{time_total}" -o /tmp/response.json \
             -X POST https://slack.com/api/chat.postMessage \
             -H "Authorization: Bearer $SLACK_TOKEN" \
             -H "Content-type: application/json; charset=utf-8" \
-            --data "{\"channel\":\"$CHANNEL_ID\",\"text\":\"Latency Test: $(START_MS), $(date -u +'%H:%M:%S.%3N UTC')\"}")
+            --data "{\"channel\":\"$CHANNEL_ID\",\"text\":\"Latency Test: $START_MS , $(date -u +'%H:%M:%S.%3N UTC')\"}")
 
           # Extract total time spent on HTTP request
           HTTP_TIME=$(tail -n 1 <<< "$RESPONSE")
