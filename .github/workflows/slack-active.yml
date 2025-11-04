@@ -2,32 +2,33 @@ name: Slack Active
 
 on:
   schedule:
-    # Run every day at 22:59 UTC (11:59 PM WAT)
-    - cron: "59 22 * * *"
+    # Run every day at 22:58 UTC (11:58 PM WAT)
+    - cron: "58 22 * * *"
   workflow_dispatch:
 
 jobs:
   post-active:
     runs-on: ubuntu-latest
     steps:
-      - name: Prepare precise timing
-        id: timing
+      - name: Wait until 200 ms before midnight
         run: |
-          # Determine seconds remaining until exactly 12:00:00 WAT (23:00:00 UTC)
-          TARGET_SEC=$((23*3600)) # 23:00 UTC in seconds
+          # Target = 23:00:00 UTC = 12:00 AM Nigeria
+          TARGET_SEC=$((23*3600))
           NOW_SEC=$(date -u +"%H*3600+%M*60+%S" | bc)
           REMAIN=$((TARGET_SEC - NOW_SEC))
           if [ $REMAIN -lt 0 ]; then REMAIN=$((REMAIN + 86400)); fi
-          # Sleep until just before midnight (0.2 s early)
-          echo "Sleeping ${REMAIN}.8 seconds (until 200 ms before midnight WAT)…"
-          sleep ${REMAIN}.8
+
+          # Compensate for ~200 ms network latency
+          OFFSET=0.20
+          echo "Sleeping $(awk -v r=$REMAIN -v o=$OFFSET 'BEGIN{print r-o}') seconds (≈200 ms early)..."
+          sleep $(awk -v r=$REMAIN -v o=$OFFSET 'BEGIN{print r-o}')
 
       - name: Post "Active" to Slack
         env:
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
           CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
         run: |
-          echo "Sending message at $(date -u) UTC"
+          echo "Sending message at $(date -u +'%Y-%m-%d %H:%M:%S.%3N') UTC"
           curl -s -X POST https://slack.com/api/chat.postMessage \
             -H "Authorization: Bearer $SLACK_TOKEN" \
             -H "Content-type: application/json; charset=utf-8" \
