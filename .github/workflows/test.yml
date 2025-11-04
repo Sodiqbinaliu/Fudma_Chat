@@ -1,0 +1,36 @@
+name: Slack Latency Test
+
+on:
+  workflow_dispatch:   # manual run
+
+jobs:
+  test-latency:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send test message and measure time
+        env:
+          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+          CHANNEL_ID: D09Q8HTBLS1
+        run: |
+          echo "Starting latency test at: $(date -u +'%Y-%m-%d %H:%M:%S.%3N') UTC"
+
+          # Record precise start time (Unix epoch milliseconds)
+          START_MS=$(($(date +%s%3N)))
+
+          RESPONSE=$(curl -s -w "\n%{time_total}" -o /tmp/response.json \
+            -X POST https://slack.com/api/chat.postMessage \
+            -H "Authorization: Bearer $SLACK_TOKEN" \
+            -H "Content-type: application/json; charset=utf-8" \
+            --data "{\"channel\":\"$CHANNEL_ID\",\"text\":\"Latency Test: $(date -u +'%H:%M:%S.%3N UTC')\"}")
+
+          # Extract total time spent on HTTP request
+          HTTP_TIME=$(tail -n 1 <<< "$RESPONSE")
+          BODY=$(head -n 1 /tmp/response.json)
+
+          END_MS=$(($(date +%s%3N)))
+          TOTAL_MS=$((END_MS - START_MS))
+
+          echo "Slack API response: $BODY"
+          echo "HTTP request time: ${HTTP_TIME}s"
+          echo "Total execution time (GitHub start → Slack send): ${TOTAL_MS} ms"
+          echo "Completed at: $(date -u +'%Y-%m-%d %H:%M:%S.%3N') UTC"
