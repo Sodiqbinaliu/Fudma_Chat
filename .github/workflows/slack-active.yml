@@ -12,16 +12,14 @@ jobs:
     steps:
       - name: Wait until 200 ms before midnight
         run: |
-          # Target = 23:00:00 UTC = 12:00 AM Nigeria
-          TARGET_SEC=$((23*3600))
-          NOW_SEC=$(date -u +"%H*3600+%M*60+%S" | bc)
-          REMAIN=$((TARGET_SEC - NOW_SEC))
-          if [ $REMAIN -lt 0 ]; then REMAIN=$((REMAIN + 86400)); fi
-
-          # Compensate for ~200 ms network latency
-          OFFSET=0.20
-          echo "Sleeping $(awk -v r=$REMAIN -v o=$OFFSET 'BEGIN{print r-o}') seconds (≈200 ms early)..."
-          sleep $(awk -v r=$REMAIN -v o=$OFFSET 'BEGIN{print r-o}')
+          TARGET="23:00:00"
+          NOW=$(date -u +%s)
+          TARGET_TIME=$(date -u -d "$(date -u +%Y-%m-%d) $TARGET" +%s)
+          if [ $NOW -gt $TARGET_TIME ]; then
+            TARGET_TIME=$(($TARGET_TIME + 86400))
+          fi
+          REMAIN=$(($TARGET_TIME - $NOW))
+          sleep $(awk -v r=$REMAIN -v o=0.22 'BEGIN{print r-o}')
 
       - name: Post "Active" to Slack
         env:
