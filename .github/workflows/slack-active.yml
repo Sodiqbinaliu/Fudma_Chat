@@ -1,33 +1,33 @@
-name: Slack Active
+#name: Slack Active
 
-on:
-  schedule:
+#on:
+ # schedule:
     # Run every day at 22:58 UTC (11:58 PM WAT)
-    - cron: "58 22 * * *"
-  workflow_dispatch:
+ #   - cron: "58 22 * * *"
+#  workflow_dispatch:
 
-jobs:
-  post-active:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Wait until 200 ms before midnight
-        run: |
-          TARGET="23:00:00"
-          NOW=$(date -u +%s)
-          TARGET_TIME=$(date -u -d "$(date -u +%Y-%m-%d) $TARGET" +%s)
-          if [ $NOW -gt $TARGET_TIME ]; then
-            TARGET_TIME=$(($TARGET_TIME + 86400))
-          fi
-          REMAIN=$(($TARGET_TIME - $NOW))
-          sleep $(awk -v r=$REMAIN -v o=0.22 'BEGIN{print r-o}')
+#jobs:
+#  post-active:
+  #  runs-on: ubuntu-latest
+    #steps:
+  #    - name: Wait until 200 ms before midnight
+  #      run: |
+   #       TARGET="23:00:00"
+    #      NOW=$(date -u +%s)
+   #       TARGET_TIME=$(date -u -d "$(date -u +%Y-%m-%d) $TARGET" +%s)
+   #       if [ $NOW -gt $TARGET_TIME ]; then
+   #         TARGET_TIME=$(($TARGET_TIME + 86400))
+  #        fi
+   #       REMAIN=$(($TARGET_TIME - $NOW))
+     #     sleep $(awk -v r=$REMAIN -v o=0.22 'BEGIN{print r-o}')
 
-      - name: Post "Active" to Slack
-        env:
-          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
-          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
-        run: |
-          echo "Sending message at $(date -u +'%Y-%m-%d %H:%M:%S.%3N') UTC"
-          curl -s -X POST https://slack.com/api/chat.postMessage \
-            -H "Authorization: Bearer $SLACK_TOKEN" \
-            -H "Content-type: application/json; charset=utf-8" \
-            --data "{\"channel\":\"$CHANNEL_ID\",\"text\":\"Active\"}"
+  #    - name: Post "Active" to Slack
+   #     env:
+   #       SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+  #        CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+   #     run: |
+   #       echo "Sending message at $(date -u +'%Y-%m-%d %H:%M:%S.%3N') UTC"
+  #        curl -s -X POST https://slack.com/api/chat.postMessage \
+ #           -H "Authorization: Bearer $SLACK_TOKEN" \
+ #           -H "Content-type: application/json; charset=utf-8" \
+ #           --data "{\"channel\":\"$CHANNEL_ID\",\"text\":\"Active\"}"
