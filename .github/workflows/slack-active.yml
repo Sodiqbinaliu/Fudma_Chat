@@ -35,8 +35,8 @@ jobs:
 
       - name: Send Slack message
         env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
         run: |
           echo "Sending Slack message..."
           start=$(date +%s.%3N)
