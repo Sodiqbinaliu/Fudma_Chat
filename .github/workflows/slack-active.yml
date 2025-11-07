@@ -37,7 +37,6 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
-          SLACK_MESSAGE: ${{ secrets.SLACK_MESSAGE }}
         run: |
           echo "Sending Slack message..."
           start=$(date +%s.%3N)
@@ -45,6 +44,6 @@ jobs:
             -X POST "https://slack.com/api/chat.postMessage" \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H "Content-Type: application/json; charset=utf-8" \
-            --data "{\"channel\":\"$SLACK_CHANNEL_ID\",\"text\":\"$SLACK_MESSAGE\"}"
+            --data "{\"channel\":\"$SLACK_CHANNEL_ID\",\"text\":\"Active\"}"
           end=$(date +%s.%3N)
           echo "Sent at $(date -u +%H:%M:%S.%3N) UTC (duration $(echo "$end - $start" | bc) s)"
