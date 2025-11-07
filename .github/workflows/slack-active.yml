@@ -2,32 +2,49 @@ name: Slack Active
 
 on:
   schedule:
-    # Run every day at 22:58 UTC (11:58 PM WAT)
+    # Run every day at 22:59 UTC (23:59 WAT)
     - cron: "59 22 * * *"
-  workflow_dispatch:
+  workflow_dispatch:  # For manual testing
 
 jobs:
-  post-active:
+  send_precise_message:
     runs-on: ubuntu-latest
-    steps:
-      - name: Wait until 200 ms before midnight
-        run: |
-          TARGET="23:00:00"
-          NOW=$(date -u +%s)
-          TARGET_TIME=$(date -u -d "$(date -u +%Y-%m-%d) $TARGET" +%s)
-          if [ $NOW -gt $TARGET_TIME ]; then
-            TARGET_TIME=$(($TARGET_TIME + 86400))
-          fi
-          REMAIN=$(($TARGET_TIME - $NOW))
-          sleep $(awk -v r=$REMAIN -v o=0.22 'BEGIN{print r-o}')
 
-      - name: Post "Active" to Slack
-        env:
-          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
-          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+    steps:
+      - name: Wait until precise send time
+        id: wait
         run: |
-          echo "Sending message at $(date -u +'%Y-%m-%d %H:%M:%S.%3N') UTC"
-          curl -s -X POST https://slack.com/api/chat.postMessage \
-            -H "Authorization: Bearer $SLACK_TOKEN" \
-            -H "Content-type: application/json; charset=utf-8" \
-            --data "{\"channel\":\"$CHANNEL_ID\",\"text\":\"Active\"}"
+          echo "Preparing to send Slack message at 00:00:00 WAT"
+
+          # Current time in UTC with milliseconds
+          now_utc=$(date -u +%s.%3N)
+
+          # Next midnight WAT (UTC+1) → 23:00 UTC today
+          target_utc=$(date -u -d "tomorrow 00:00:00 UTC" +%s.%3N)
+          target_utc=$(echo "$target_utc - 3600" | bc)
+
+          # Fire slightly early (0.20s before midnight)
+          fire_time=$(echo "$target_utc - 0.22" | bc)
+
+          # Calculate remaining seconds
+          sleep_seconds=$(echo "$fire_time - $now_utc" | bc)
+          echo "Sleeping for $sleep_seconds seconds..."
+          if (( $(echo "$sleep_seconds > 0" | bc -l) )); then
+            sleep $sleep_seconds
+          fi
+
+      - name: Send Slack message
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+          SLACK_MESSAGE: ${{ secrets.SLACK_MESSAGE }}
+        run: |
+          echo "Sending Slack message..."
+          start=$(date +%s.%3N)
+          curl -s -o /dev/null -w "status=%{http_code}, time=%{time_total}\n" \
+            -X POST "https://slack.com/api/chat.postMessage" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            --data "{\"channel\":\"$SLACK_CHANNEL_ID\",\"text\":\"$SLACK_MESSAGE\"}"
+          end=$(date +%s.%3N)
+          echo "Sent at $(date -u +%H:%M:%S.%3N) UTC (duration $(echo "$end - $start" | bc) s)"
