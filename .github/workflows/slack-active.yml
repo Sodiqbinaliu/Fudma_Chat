@@ -1,9 +1,6 @@
 name: Slack Active
 
 on:
-  schedule:
-    # Run every day at 22:59 UTC (23:59 WAT)
-    - cron: "59 22 * * *"
   workflow_dispatch:  # For manual testing
 
 jobs:
