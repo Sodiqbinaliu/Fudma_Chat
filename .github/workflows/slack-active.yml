@@ -1,8 +1,6 @@
 name: Slack Active
 
 on:
-  schedule:
-   - cron: "59 22 * * *"
   workflow_dispatch:  # For manual testing
 
 jobs:
@@ -23,7 +21,7 @@ jobs:
           target_utc=$(echo "$target_utc - 3600" | bc)
 
           # Fire slightly early (0.20s before midnight)
-          fire_time=$(echo "$target_utc - 0.225" | bc)
+          fire_time=$(echo "$target_utc - 0.223" | bc)
 
           # Calculate remaining seconds
           sleep_seconds=$(echo "$fire_time - $now_utc" | bc)
